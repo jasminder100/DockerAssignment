@@ -54,4 +54,5 @@ environment:
  2)  - ELASTICSEARCH_SERVICEACCOUNTTOKEN=<paste-token-here>
  
 Restart Kibana to apply the changes.
-docker-compose up -d kibana
+
+1) docker-compose up -d kibana
