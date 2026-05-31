@@ -51,7 +51,7 @@ curl -u 'elastic:<your-password>' -X POST "http://localhost:9200/_security/servi
 Copy the value from the response and add it to the Kibana service in docker-compose.yml.
 environment:
  1)  - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
- 2)  - ELASTICSEARCH_SERVICEACCOUNTTOKEN=<paste-token-here>
+ 2)  - ELASTICSEARCH_SERVICEACCOUNTTOKEN = <paste-token-here>
  
 Restart Kibana to apply the changes.
 
