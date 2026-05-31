@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - nginx_logs:/var/log/nginx   # shared volume for logs
+    networks:
+      - elk
+
+  elasticsearch:
+    build: ./elasticsearch
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=changeme
+      - xpack.security.http.ssl.enabled=false   # disable SSL for local dev
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - elk
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:changeme http://localhost:9200/_cluster/health | grep -q 'green\\|yellow'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  kibana:
+    build: ./kibana
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVICEACCOUNTTOKEN="AAEAAWVsYXN0aWMva2liYW5hL2tpYmFuYV90b2tlbjpDVmNCNmowZ1RBYUJVTnBJT2wySG5B" 
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk
+
+  filebeat:
+    build: ./filebeat
+    container_name: filebeat
+    user: root                        # needs root to read nginx log volume
+    volumes:
+      - nginx_logs:/var/log/nginx:ro  # reads nginx logs (read-only)
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk
+
+volumes:
+  nginx_logs:    # shared between nginx (write) and filebeat (read)
+  es_data:       # persists elasticsearch data
+
+networks:
+  elk:
+    driver: bridge
